@@ -383,19 +383,19 @@ cmd_show() {
 	local passfile="$PREFIX/$path.gpg"
 	check_sneaky_paths "$path"
 	if [[ -f $passfile ]]; then
-		if [[ $clip -eq 0 && $qrcode -eq 0 ]]; then
-			pass="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | $BASE64)" || exit $?
-			echo "$pass" | $BASE64 -d
-		else
-			[[ $selected_line =~ ^[0-9]+$ ]] || die "Clip location '$selected_line' is not a number."
-			pass="$($GPG -d "${GPG_OPTS[@]}" "$passfile" | tail -n +${selected_line} | head -n 1)" || exit $?
-			[[ -n $pass ]] || die "There is no password to put on the clipboard at line ${selected_line}."
+			pass="$($GPG -d ${GPG_OPTS[@]} "$passfile")" || exit $?
+			if [[ ! -z $selected_line ]]; then
+				[[ $selected_line =~ ^[0-9]+$ ]] || die "Clip location '$selected_line' is not a number."
+				pass="$(echo -n "$pass" | tail -n +${selected_line} | head -n 1)"
+				[[ -n $pass ]] || die "There is no password to put on the clipboard at line ${selected_line}."
+			fi
 			if [[ $clip -eq 1 ]]; then
 				clip "$pass" "$path"
 			elif [[ $qrcode -eq 1 ]]; then
 				qrcode "$pass" "$path"
+			else
+				echo "$pass"
 			fi
-		fi
 	elif [[ -d $PREFIX/$path ]]; then
 		if [[ -z $path ]]; then
 			echo "Password Store"
