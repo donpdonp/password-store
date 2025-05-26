@@ -213,6 +213,15 @@ qrcode() {
 	echo -n "$1" | qrencode -t utf8
 }
 
+otp() {
+	local otp_cmd=${OATHTOOL%% *}
+	if [[ -f $(which $otp_cmd) ]]; then
+		$OATHTOOL "$1"
+	else
+		die $otp_cmd is not found in PATH $PATH
+	fi
+}
+
 tmpdir() {
 	[[ -n $SECURE_TMPDIR ]] && return
 	local warn=1
@@ -245,6 +254,7 @@ tmpdir() {
 GETOPT="getopt"
 SHRED="shred -f -z"
 BASE64="base64"
+OATHTOOL="oathtool --base32 --totp"
 
 source "$(dirname "$0")/platform/$(uname | cut -d _ -f 1 | tr '[:upper:]' '[:lower:]').sh" 2>/dev/null # PLATFORM_FUNCTION_FILE
 
@@ -366,13 +376,14 @@ cmd_init() {
 }
 
 cmd_show() {
-	local opts selected_line clip=0 qrcode=0
-	opts="$($GETOPT -o q::c:: -l qrcode::,clip:: -n "$PROGRAM" -- "$@")"
+	local opts selected_line clip=0 qrcode=0 otp=0
+	opts="$($GETOPT -o q::c::o:: -l qrcode::,clip::,otp:: -n "$PROGRAM" -- "$@")"
 	local err=$?
 	eval set -- "$opts"
 	while true; do case $1 in
 		-q|--qrcode) qrcode=1; selected_line="${2:-1}"; shift 2 ;;
 		-c|--clip) clip=1; selected_line="${2:-1}"; shift 2 ;;
+		-o|--otp) otp=1; selected_line="${2:-1}"; shift 2 ;;
 		--) shift; break ;;
 	esac done
 
@@ -384,11 +395,18 @@ cmd_show() {
 	check_sneaky_paths "$path"
 	if [[ -f $passfile ]]; then
 			pass="$($GPG -d ${GPG_OPTS[@]} "$passfile")" || exit $?
+
+			# Filter options
 			if [[ ! -z $selected_line ]]; then
 				[[ $selected_line =~ ^[0-9]+$ ]] || die "Clip location '$selected_line' is not a number."
 				pass="$(echo -n "$pass" | tail -n +${selected_line} | head -n 1)"
 				[[ -n $pass ]] || die "There is no password to put on the clipboard at line ${selected_line}."
 			fi
+			if [[ $otp -eq 1 ]]; then
+				pass="$(echo -n "$pass" | otp "$pass")"
+			fi
+
+			# Output options
 			if [[ $clip -eq 1 ]]; then
 				clip "$pass" "$path"
 			elif [[ $qrcode -eq 1 ]]; then
