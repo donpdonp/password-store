@@ -413,7 +413,7 @@ cmd_show() {
 			elif [[ $qrcode -eq 1 ]]; then
 				qrcode "$pass" "$path"
 			elif [[ "$filename" == "otp" || "$pass" =~  ^otpauth:\/\/ ]]; then
-			  oathtool -b --totp "$pass"
+			  echo '*otp:' $(oathtool -b --totp "$pass")
 			else
 				echo "$pass"
 			fi
