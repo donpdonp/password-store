@@ -407,10 +407,13 @@ cmd_show() {
 			fi
 
 			# Output options
+			filename="${path##*/}"
 			if [[ $clip -eq 1 ]]; then
 				clip "$pass" "$path"
 			elif [[ $qrcode -eq 1 ]]; then
 				qrcode "$pass" "$path"
+			elif [[ "$filename" == "otp" || "$pass" =~  ^otpauth:\/\/ ]]; then
+			  oathtool -b --totp "$pass"
 			else
 				echo "$pass"
 			fi
