@@ -294,8 +294,8 @@ cmd_usage() {
 	        List passwords.
 	    $PROGRAM find pass-names...
 	    	List passwords that match pass-names.
-	    $PROGRAM [show] [--clip[=line-number],-c[line-number]] pass-name
-	        Show existing password and optionally put it on the clipboard.
+	    $PROGRAM [show] [--clip[=line-number],-c[line-number],--otp] pass-name
+	        Show existing password and optionally put it on the clipboard, and optionally OTP decode.
 	        If put on the clipboard, it will be cleared in $CLIP_TIME seconds.
 	    $PROGRAM grep [GREPOPTIONS] search-string
 	        Search for password files containing search-string when decrypted.
@@ -387,7 +387,7 @@ cmd_show() {
 		--) shift; break ;;
 	esac done
 
-	[[ $err -ne 0 || ( $qrcode -eq 1 && $clip -eq 1 ) ]] && die "Usage: $PROGRAM $COMMAND [--clip[=line-number],-c[line-number]] [--qrcode[=line-number],-q[line-number]] [pass-name]"
+	[[ $err -ne 0 || ( $qrcode -eq 1 && $clip -eq 1 ) ]] && die "Usage: $PROGRAM $COMMAND [--clip[=line-number],-c[line-number]] [--qrcode[=line-number],-q[line-number],--otp] [pass-name]"
 
 	local pass
 	local path="$1"
